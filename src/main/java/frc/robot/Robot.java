@@ -12,7 +12,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.VictorSP;
+import com.ctre.phoenix.motorcontrol.can.VictorSPX;
+import com.ctre.phoenix.motorcontrol.ControlMode;
 
 /**
  * This is a demo program showing the use of the DifferentialDrive class. Runs the motors with
@@ -31,9 +32,10 @@ public class Robot extends TimedRobot {
 
   //Operator
   private final XboxController Operator = new XboxController(1);
-  private final VictorSP Threadmill = new VictorSP(0); 
-  private final VictorSP TopMotor = new VictorSP(1);
-  private final VictorSP BottomMotor = new VictorSP(2);
+  private final VictorSPX Threadmill = new VictorSPX(0); 
+  private final VictorSPX TopMotor = new VictorSPX(1);
+  private final VictorSPX BottomMotor = new VictorSPX(2);
+  private final VictorSPX Intake =  new VictorSPX(3);
   
   @Override
   public void teleopInit() {
@@ -45,6 +47,7 @@ public class Robot extends TimedRobot {
   public void robotPeriodic() {
     boolean b_start = m_stick.getStartButton();
     boolean b_back = m_stick.getBackButton();
+    
     if (b_back && (DriveMode == 1)) {
       DriveMode = 0;
     } else if (b_start && (DriveMode == 0)) {
@@ -65,9 +68,17 @@ public class Robot extends TimedRobot {
     boolean b_right_bumper = m_stick.getBumper(GenericHID.Hand.kRight);
     boolean state_shifter = s_shifter.get();
     boolean o_right_bumper = Operator.getBumper(GenericHID.Hand.kRight);
+    boolean intake_a = Operator.getAButton();
 
-    TopMotor.set(Operator.getY());
-    BottomMotor.set(Operator.getY(GenericHID.Hand.kRight));
+    if (intake_a == true) {
+      Intake.set(ControlMode.PercentOutput, 0.2);
+    }
+    else if (intake_a == false){
+      Intake.set(ControlMode.PercentOutput, 0);
+    }
+
+    TopMotor.set(ControlMode.PercentOutput, Operator.getY());
+    BottomMotor.set(ControlMode.PercentOutput, Operator.getY(GenericHID.Hand.kRight));
     //Shifting
     if (b_left_bumper && b_right_bumper) {
       return;
@@ -79,10 +90,10 @@ public class Robot extends TimedRobot {
     //Threadmill(Intake)
 
     if (o_right_bumper == true){
-      Threadmill.set(1);
+      Threadmill.set(ControlMode.PercentOutput, 1);
     }
     else {
-      Threadmill.set(0);
+      Threadmill.set(ControlMode.PercentOutput, 0);
     }
     
   }
@@ -90,7 +101,7 @@ public class Robot extends TimedRobot {
 
   public double acceleration(int mode) {
     if (mode == 0) {
-      return m_stick.getY();
+      return m_stick.getY(GenericHID.Hand.kLeft);
     } else if (mode == 1) {
       double Left_trigger_value = (m_stick.getTriggerAxis(GenericHID.Hand.kLeft)+1)/2;
       double Right_trigger_value = (m_stick.getTriggerAxis(GenericHID.Hand.kRight)+1)/2;
